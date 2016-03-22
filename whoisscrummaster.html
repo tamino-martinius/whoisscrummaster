@@ -1,0 +1,17 @@
+<head>
+  <title>who is scrum master</title>
+</head>
+
+<body>
+  <div class="container">
+    <h3>This weeks scrum master is</h3>
+    {{> app}}
+  </div>
+</body>
+
+<template name="app">
+  <h1>{{scrumMaster}}</h1>
+  <em>
+    {{scrumMasters}}
+  </em>
+</template>
