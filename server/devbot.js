@@ -129,5 +129,9 @@ bot.on('message', Meteor.bindEnvironment(function(data) {
       }
       bot.postMessage(channel, message);
     }
+    const helloMatch = text.match(/hey devbot/ig) || text.match(/hey marvin/ig);
+    if (helloMatch)
+      bot.postMessage(channel, 'I`m not Siri');
+    }
   }
 }));
