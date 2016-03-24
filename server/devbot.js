@@ -73,11 +73,11 @@ formatIssue = function(issue, showStatus = false) {
 };
 
 bot.on('message', Meteor.bindEnvironment(function(data) {
+  // console.log(data);
   if (data.type === 'message' && (data.subtype === undefined || data.subtype === 'message_changed')) {
     const text = data.text || data.message.text || '';
     const channel = data.channel;
     const issueMatch = text.match(/shyf[- ](\d+)/gi);
-    console.log(data);
     if (issueMatch) {
       issueMatch.map(hit => {
         const issue = 'SHYF-' + hit.match(/^shyf[- ](\d+)$/i)[1];
@@ -93,10 +93,34 @@ bot.on('message', Meteor.bindEnvironment(function(data) {
         if (text.includes(version.name)) {
           let message = '';
           const issues = jiraGet('search?jql=fixversion=' + version.name).issues;
-          const issueGroups = _.groupBy(issues, issue => issue.fields.issuetype.name);
-          for (const issueGroupName in issueGroups) {
-            message += `\n*${issueGroupName}*\n`;
-            issueGroups[issueGroupName].map(issue => (message += formatIssue(issue, true)));
+          const groupedByType = _.groupBy(issues, issue => issue.fields.issuetype.name);
+          for (const issueType in groupedByType) {
+            message += `\n*${issueType}*\n`;
+            groupedByType[issueType].map(issue => (message += formatIssue(issue, true)));
+          }
+          const groupedByAssignee = _.groupBy(issues, issue => ((issue.fields.assignee && issue.fields.assignee.displayName) || 'unassigned'));
+          for (const name in groupedByAssignee) {
+            const todoIssues = _.filter(groupedByAssignee[name], issue => (issue.fields.status.name === 'To Do'));
+            const progressIssues = _.filter(groupedByAssignee[name], issue => (issue.fields.status.name === 'In Progress'));
+            const reviewIssues = _.filter(groupedByAssignee[name], issue => (issue.fields.status.name === 'In Review'));
+            const doneIssues = _.filter(groupedByAssignee[name], issue => (issue.fields.status.name === 'Done'));
+            const getHours = function(issues) {
+              return _.reduce(issues, (memo, issue) => {
+                return memo + (issue.fields.timeoriginalestimate || 0 );
+              }, 0) / (60 * 60);
+            };
+            const todoHours = getHours(todoIssues);
+            const progressHours = getHours(progressIssues);
+            const reviewHours = getHours(reviewIssues);
+            const doneHours = getHours(doneIssues);
+            const totalHours = todoHours + progressHours + reviewHours + doneHours;
+            if (totalHours > 0) {
+              message += `\n\n*${name}*\n`;
+              message += `Open: \`${todoHours + progressHours}\`h `;
+              message += `Rev.: \`${reviewHours}\`h `;
+              message += `Done: \`${doneHours}\`h `;
+              message += `*Total*: \`${totalHours}\`h `;
+            }
           }
           bot.postMessage(channel, message);
         }
@@ -106,13 +130,13 @@ bot.on('message', Meteor.bindEnvironment(function(data) {
     if (sprintMatch) {
       let message = '';
       const issues = jiraGet('search?maxResults=1000&jql=sprint in openSprints()').issues;
-      const issueGroups = _.groupBy(issues, issue => ((issue.fields.assignee && issue.fields.assignee.displayName) || 'unassigned'));
-      for (const name in issueGroups) {
+      const groupedByAssignee = _.groupBy(issues, issue => ((issue.fields.assignee && issue.fields.assignee.displayName) || 'unassigned'));
+      for (const name in groupedByAssignee) {
         message += `\n\n*${name}*\n`;
-        const todoIssues = _.filter(issueGroups[name], issue => (issue.fields.status.name === 'To Do' && issue.fields.issuetype.name !== 'Technical task'));
-        const progressIssues = _.filter(issueGroups[name], issue => (issue.fields.status.name === 'In Progress' && issue.fields.issuetype.name !== 'Technical task'));
-        const reviewIssues = _.filter(issueGroups[name], issue => (issue.fields.status.name === 'In Review' && issue.fields.issuetype.name !== 'Technical task'));
-        const doneIssues = _.filter(issueGroups[name], issue => (issue.fields.status.name === 'Done' && issue.fields.issuetype.name !== 'Technical task'));
+        const todoIssues = _.filter(groupedByAssignee[name], issue => (issue.fields.status.name === 'To Do' && issue.fields.issuetype.name !== 'Technical task'));
+        const progressIssues = _.filter(groupedByAssignee[name], issue => (issue.fields.status.name === 'In Progress' && issue.fields.issuetype.name !== 'Technical task'));
+        const reviewIssues = _.filter(groupedByAssignee[name], issue => (issue.fields.status.name === 'In Review' && issue.fields.issuetype.name !== 'Technical task'));
+        const doneIssues = _.filter(groupedByAssignee[name], issue => (issue.fields.status.name === 'Done' && issue.fields.issuetype.name !== 'Technical task'));
         message += '\n_Summary:_\n';
         message += '> Todo: `' + todoIssues.length + '`\n';
         message += '> Prog: `' + progressIssues.length + '`\n';
@@ -131,7 +155,7 @@ bot.on('message', Meteor.bindEnvironment(function(data) {
     }
     const helloMatch = text.match(/hey devbot/ig) || text.match(/hey marvin/ig);
     if (helloMatch) {
-      bot.postMessage(channel, 'I`m not Siri');
+      bot.postMessage(channel, 'Life. Don`t talk to me about life.');
     }
   }
 }));
