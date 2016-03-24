@@ -153,6 +153,10 @@ bot.on('message', Meteor.bindEnvironment(function(data) {
       }
       bot.postMessage(channel, message);
     }
+    const scrumMatch = text.match(/who ?is ?scrum ?master/ig);
+    if (scrumMatch) {
+      bot.postMessage(channel, 'Current Scrum Master is `' + scrumMaster() + '`');
+    }
     const helloMatch = text.match(/hey devbot/ig) || text.match(/hey marvin/ig);
     if (helloMatch) {
       bot.postMessage(channel, 'Life. Don`t talk to me about life.');
