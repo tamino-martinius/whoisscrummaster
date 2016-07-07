@@ -1,4 +1,4 @@
-const scrumMasters = ["Jan","Shreyas","Tamino"]
+const scrumMasters = ["Jan","Shreyas","Tamino", "Noelia"]
 
 Template.app.helpers({
   scrumMasters() {
