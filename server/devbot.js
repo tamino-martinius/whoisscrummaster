@@ -1,4 +1,4 @@
-const scrumMasters = ["Jan","Shreyas","Tamino"]
+const scrumMasters = ["Jan", "Shreyas", "Tamino", "Noelia"]
 
 scrumMaster = function() {
   return scrumMasters[(Math.floor((Date.now()/1e3/60/60/24+3)/7)+2) % scrumMasters.length];
