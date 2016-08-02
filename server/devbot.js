@@ -9,9 +9,8 @@ github = new GitHub({
 });
 
 github.authenticate({
-  type: 'basic',
-  username: process.env.GITHUB_AUTH_USR,
-  password: process.env.GITHUB_AUTH_PWD,
+  type: 'oauth',
+  token: process.env.GITHUB_AUTH_TOKEN,
 });
 
 jiraGet = function(rel) {
